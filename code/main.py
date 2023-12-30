@@ -1,6 +1,5 @@
 import time
 from sys import exit
-
 import pygame
 
 from background import Background
@@ -8,7 +7,8 @@ from character import Character
 from floor import Floor
 from pipe import create_full_pipe
 from settings import *
-
+from score import GameScore
+from collisions import GameCollisions
 
 pygame.init()
 
@@ -30,31 +30,15 @@ game_message_rect = game_message_surf.get_rect(center=(400, 100))
 # timer
 obstacle_timer = pygame.USEREVENT + 1
 pygame.time.set_timer(obstacle_timer, 1400)
-score = '0'
 
 game_active = False
 start_time = 0
-
-
-def collisions() -> bool:
-    global start_time
-    # noinspection PyTypeChecker
-    if pygame.sprite.spritecollide(char, collision_sprites, False, pygame.sprite.collide_mask) or char.rect.top <= -60:
-        char.state = 'dead'
-        return False
-    return True
-
-
-def display_score():
-    current_time = pygame.time.get_ticks() - start_time
-    game_score = str(int(current_time/1000))
-    score_surf = font.render('Score: ' + game_score, False, (0, 0, 0))
-    score_rect = score_surf.get_rect(center=(600, 70))
-    screen.blit(score_surf, score_rect)
-    return game_score
-
-
+score = '0'
 last_time = time.time()
+
+game_score = GameScore()
+game_collisions = GameCollisions()
+
 while True:
 
     dt = time.time() - last_time
@@ -74,7 +58,7 @@ while True:
 
     if game_active:
 
-        game_active = collisions()
+        game_active = game_collisions.apply(char, collision_sprites)
         all_sprites.draw(screen)
         all_sprites.update(dt)
 
@@ -82,7 +66,7 @@ while True:
         if keys[pygame.K_SPACE]:
             char.jump()
 
-        score = display_score()
+        score = game_score.display(font, screen, start_time)
 
     else:
 
